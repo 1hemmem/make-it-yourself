@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    OLLAMA_NGROK_URL = "https://15c6-35-197-67-52.ngrok-free.app"
+    OLLAMA_NGROK_URL = "https://b25b-34-124-148-219.ngrok-free.app"
     model = "llama3.2:3b"
 
     ## What the document describe as an input
@@ -78,7 +78,6 @@ if __name__ == "__main__":
         DBpath="../data/chromadb",
     )
     db = db.loadDB()
-    context = db.similarity_search(user_query,k=4)
     # rag_system_prompt = [
     #     HumanMessage(
     #         content=f"""You are an assistant for question-answering tasks. 
@@ -100,25 +99,30 @@ if __name__ == "__main__":
     # Answer:"""
     #     )
     # ]
-    rag_system_prompt = [
-    HumanMessage(
-        content=f"""You are an assistant for question-answering tasks.
+    while True:
+        question = input("user: ")
+        context = db.similarity_search(user_query,k=4)
+        rag_system_prompt = [
+        HumanMessage(
+            content=f"""You are an assistant for question-answering tasks.
 
-    Here is the context to use to answer the question:
+        Here is the context to use to answer the question:
 
-    {context}
+        {context}
 
-    Think carefully about the above context.
+        Think carefully about the above context.
 
-    Now, review the user question:
+        Now, review the user question:
 
-    {user_query}
+        {question}
 
-    Provide a detailed answer to this question, considering all relevant context. 
+        Provide a detailed answer to this question, considering all relevant context. 
+        
+        However, you should not be talking about a provided document or somthing like that, you have to speake with confidance.
 
-    Aim for clarity and completeness in your explanation.
-    Answer:"""
-        )
-    ]
-    respond = llm.invoke(rag_system_prompt)
-    print(respond)
+        Aim for clarity and completeness in your explanation.
+        Answer:"""
+            )
+        ]
+        respond = llm.invoke(rag_system_prompt)
+        print(respond)
