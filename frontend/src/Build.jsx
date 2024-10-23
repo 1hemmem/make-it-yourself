@@ -9,9 +9,10 @@ export const Build = () => {
   const [temperature, setTemperature] = useState(0.5);
   const [topP, setTopP] = useState(0.9);
   const [topK, setTopK] = useState(40);
+  const [loading, setLoading] = useState(false); // State to track loading
 
   const basemodels = [
-    "llama3.2",
+    "llama3.2:3b",
     "llama3.1",
     "gemma2",
     "qwen2.5",
@@ -57,80 +58,10 @@ export const Build = () => {
     setTopK(event.target.value);
   };
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault(); // Prevent the default form submission
-
-  //   // Create an object with all the parameters
-  //   const formData = {
-  //     pdfFiles: pdfFiles.map((file) => file.name), // Collect just the file names
-  //     description,
-  //     selectedBase,
-  //     selectedEmbedding,
-  //     temperature: parseFloat(temperature),
-  //     top_p: parseFloat(topP),
-  //     top_k: parseInt(topK, 10),
-  //   };
-
-  //   // Send the data to the server
-  //   try {
-  //     const response = await fetch("http://localhost:8000/submit/", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(formData),
-  //     });
-
-  //     if (response.ok) {
-  //       const responseData = await response.json();
-  //       console.log("Success:", responseData);
-  //     } else {
-  //       console.error("Error:", response.statusText);
-  //     }
-  //   } catch (error) {
-  //     console.error("Network error:", error);
-  //   }
-  // };
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault(); // Prevent the default form submission
-
-  //   // Create a new FormData object
-  //   const formData = new FormData();
-
-  //   // Append PDF files to FormData
-  //   pdfFiles.forEach((file) => {
-  //     formData.append("pdfFiles", file); // Use "pdfFiles" as the field name for the files
-  //   });
-
-  //   // Append other form data
-  //   formData.append("description", description);
-  //   formData.append("selectedBase", selectedBase);
-  //   formData.append("selectedEmbedding", selectedEmbedding);
-  //   formData.append("temperature", parseFloat(temperature));
-  //   formData.append("top_p", parseFloat(topP));
-  //   formData.append("top_k", parseInt(topK, 10));
-
-  //   // Send the data to the server
-  //   try {
-  //     const response = await fetch("http://localhost:8000/submit/", {
-  //       mode:'no-cors',
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     if (response.ok) {
-  //       const responseData = await response.json();
-  //       console.log("Success:", responseData);
-  //     } else {
-  //       console.error("Error:", response.statusText);
-  //     }
-  //   } catch (error) {
-  //     console.error("Network error:", error);
-  //   }
-  // };
-  // When using FormData, do not use 'application/json' headers.
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    setLoading(true); // Set loading to true when starting the submission
 
     // Create a new FormData object
     const formData = new FormData();
@@ -162,6 +93,8 @@ export const Build = () => {
       }
     } catch (error) {
       console.error("Network error:", error);
+    } finally {
+      setLoading(false); // Reset loading to false once submission is complete
     }
   };
 
@@ -180,6 +113,7 @@ export const Build = () => {
             accept=".pdf"
             onChange={handlePdfUpload}
             required
+            disabled={loading} // Disable during loading
           />
           <ul>
             {pdfFiles.map((file, index) => (
@@ -196,8 +130,9 @@ export const Build = () => {
             id="description"
             value={description}
             onChange={handleDescriptionChange}
-            placeholder="Enter document description, based on this description the model will detect if the user question is relevant or not and make a decision to either answer or apologies"
+            placeholder="Enter document description, based on this description the model will detect if the user question is relevant or not and make a decision to either answer or apologize"
             required
+            disabled={loading} // Disable during loading
           />
         </div>
 
@@ -210,6 +145,7 @@ export const Build = () => {
             value={selectedBase}
             onChange={handleBaseChange}
             required
+            disabled={loading} // Disable during loading
           >
             <option value="" disabled>
               Choose a base model
@@ -231,6 +167,7 @@ export const Build = () => {
             value={selectedEmbedding}
             onChange={handleEmbeddingChange}
             required
+            disabled={loading} // Disable during loading
           >
             <option value="" disabled>
               Choose an embedding model
@@ -255,6 +192,7 @@ export const Build = () => {
             step="0.01"
             value={temperature}
             onChange={handleTemperatureChange}
+            disabled={loading} // Disable during loading
           />
         </div>
 
@@ -270,6 +208,7 @@ export const Build = () => {
             step="0.01"
             value={topP}
             onChange={handleTopPChange}
+            disabled={loading} // Disable during loading
           />
         </div>
 
@@ -282,12 +221,18 @@ export const Build = () => {
             id="top-k-input"
             value={topK}
             onChange={handleTopKChange}
+            disabled={loading} // Disable during loading
           />
         </div>
 
+        {/* Loading Animation */}
+        {loading && <div className="loading-spinner">Loading...</div>}
+
         {/* Submit Button */}
         <div className="form-section">
-          <button type="submit">Build</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Building..." : "Build"}
+          </button>
         </div>
       </form>
     </div>

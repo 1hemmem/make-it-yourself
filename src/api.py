@@ -1,16 +1,18 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 import logging
-from typing import List
+from typing import Dict, List
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import uvicorn
 from mychromadb import ChromaDB
 from ollama_setup import OllamaSetup
-from graph import chat_with_chatbot
-
+from graph import  makegraph
+import mychromadb as ch
+from langgraph import graph
 
 app = FastAPI()
+OLLAMA_NGROK_URL = "https://c3fa-34-148-212-117.ngrok-free.app"
 
-OLLAMA_NGROK_URL = "https://edac-34-80-16-214.ngrok-free.app"
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +26,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+modelconfig = None
+
+class QueryRequest(BaseModel):
+    query: str
+
+
+def chat_with_chatbot(
+    user_query: str,
+    document_description: str,
+    graph: graph,
+) -> str:
+    """
+    This function allows interaction with the chatbot and returns the response.
+    """
+    state = {"document_description": document_description, "conversation_history": []}
+
+    inputs = {
+        "query": user_query,
+        "document_description": state["document_description"],
+        "conversation_history": [],
+    }
+
+    state["answer"] = ""
+
+    for event in graph.stream(inputs, stream_mode="values"):
+        if "answer" in event:
+            state.update(event)
+
+    return state["answer"]
 
 
 @app.post("/submit/")
@@ -56,18 +88,15 @@ async def submit_data(
         logger.info(f"Uploaded files: {uploaded_file_paths}")
 
         ## create the embedding dataset and the model
-        
-        chroma = ChromaDB(selectedEmbedding,"../data/chromadb",uploaded_file_paths)
-        db = chroma.saveDB(1000,150)
-        
-        print(db)
-        ## when the creation is done return a message
-        
-        ollama = OllamaSetup(OLLAMA_NGROK_URL,selectedBase,temperature,top_p,top_k)
-        ollama.create_llm_instance()
-        chat_with_chatbot()
-        
-        return {
+
+        ollamaobject = OllamaSetup(
+            OLLAMA_NGROK_URL, selectedBase, temperature, top_p, top_k
+        )
+        ollamaobject.create_llm_instance()
+        chroma = ch.ChromaDB(selectedEmbedding, "../data/chromadb", uploaded_file_paths)
+        database = chroma.loadDB()
+        graph = makegraph(ollamaobject, database)
+        modelconfig = {
             "message": "Data received successfully",
             "description": description,
             "selectedBase": selectedBase,
@@ -76,10 +105,23 @@ async def submit_data(
             "top_p": top_p,
             "top_k": top_k,
             "uploaded_files": uploaded_file_paths,
+            "graph": graph,
         }
+        return modelconfig
     except Exception as e:
         logger.error(f"Error processing data: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/chat")
+async def chat(query_request: QueryRequest) -> Dict[str, str]:
+    user_query = query_request.query
+    if not user_query:
+        return {"error": "No query provided"}
+    graph = modelconfig["graph"]
+    document_description = modelconfig["document_description"]
+    response = chat_with_chatbot(user_query,document_description,graph  )
+    return {"response": response}
 
 
 if __name__ == "__main__":

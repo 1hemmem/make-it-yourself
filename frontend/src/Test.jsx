@@ -3,37 +3,36 @@ import { useState } from 'react';
 export const Test = () => {
     const [query, setQuery] = useState('');
     const [chatHistory, setChatHistory] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Function to handle submitting the user's query
     const handleSendQuery = async () => {
         if (query.trim() === '') return;
 
-        // Append the user's query to the chat history
         const userMessage = { sender: 'You', message: query };
         setChatHistory([...chatHistory, userMessage]);
+        setLoading(true);
 
-        // Simulate the chatbot's response
-        const chatbotResponse = await getChatbotResponse(query);
-        const botMessage = { sender: 'Chatbot', message: chatbotResponse };
+        try {
+            const response = await fetch('http://localhost:8000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query }),
+            });
 
-        // Update the chat history with the bot's response
-        setChatHistory(prevHistory => [...prevHistory, botMessage]);
+            const data = await response.json();
+            const botMessage = { sender: 'Chatbot', message: data.response };
 
-        // Clear the query input
-        setQuery('');
+            setChatHistory((prevHistory) => [...prevHistory, botMessage]);
+        } catch (error) {
+            console.error('Error communicating with chatbot:', error);
+        } finally {
+            setLoading(false);
+            setQuery('');  // Clear the input field
+        }
     };
 
-    // Simulate the chatbot's response (replace this with your actual chatbot integration)
-    const getChatbotResponse = async (userQuery) => {
-        // Simulate a delay for the chatbot's response
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve(`This is a response to "${userQuery}"`);
-            }, 1000);
-        });
-    };
-
-    // Function to handle pressing Enter in the input field
     const handleKeyPress = (event) => {
         if (event.key === 'Enter') {
             handleSendQuery();
@@ -42,18 +41,18 @@ export const Test = () => {
 
     return (
         <div style={styles.container}>
+            <br />
             <h1>Chatbot Test</h1>
 
-            {/* Conversation window */}
             <div style={styles.chatWindow}>
                 {chatHistory.map((entry, index) => (
                     <div key={index} style={entry.sender === 'You' ? styles.userMessage : styles.botMessage}>
                         <strong>{entry.sender}:</strong> {entry.message}
                     </div>
                 ))}
+                {loading && <div style={styles.loadingMessage}>Chatbot is typing...</div>}
             </div>
 
-            {/* Input for sending a query */}
             <div style={styles.inputContainer}>
                 <input
                     type="text"
@@ -62,14 +61,16 @@ export const Test = () => {
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyPress={handleKeyPress}
                     style={styles.input}
+                    disabled={loading}  // Disable input while loading
                 />
-                <button onClick={handleSendQuery} style={styles.button}>Send</button>
+                <button onClick={handleSendQuery} style={styles.button} disabled={loading}>
+                    {loading ? 'Sending...' : 'Send'}
+                </button>
             </div>
         </div>
     );
 };
 
-// Styles for the component
 const styles = {
     container: {
         display: 'flex',
@@ -127,5 +128,9 @@ const styles = {
         backgroundColor: '#646cff',
         color: 'white',
         cursor: 'pointer',
+    },
+    loadingMessage: {
+        textAlign: 'center',
+        color: '#999',
     },
 };
