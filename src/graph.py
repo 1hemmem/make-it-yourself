@@ -5,31 +5,32 @@ from ollama_setup import OllamaSetup
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 from langgraph.graph import StateGraph
-from IPython.display import Image, display
 
 # User input data
-OLLAMA_NGROK_URL = "https://cf44-35-240-163-56.ngrok-free.app"
+OLLAMA_NGROK_URL = "https://c178-34-125-16-106.ngrok-free.app"
 model = "llama3.2:3b"
 embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+k = 4
 temperature = 0
-whoami = "you are a cutomer support chatbot, the users expect you to be an expert of ubuntu and will ask you question about it"
+whoami = "You are a knowledge managment assistant, users will ask you domain specific questions and you will answer them according to your experience"
+documen_description = """The official documentation of Ubuntu Server. It contains all the technical knowledge you need to know,
+        including configuration and anything related to Ubuntu."""
+
 top_p = 0.9
+
 """Works together with top-k. A higher value (e.g., 0.95) will lead
     to more diverse text, while a lower value (e.g., 0.5) will
     generate more focused and conservative text. (Default: 0.9)"""
 
 top_k = 40
+
 """Reduces the probability of generating nonsense. A higher value (e.g. 100)
     will give more diverse answers, while a lower value (e.g. 10)
     will be more conservative. (Default: 40)"""
 
 
 class GraphState(TypedDict):
-    """
-    This state object will contain all the data
-    that we want to pass around the nodes
-    """
-
+    conversation_history: List[str]
     document_description: str
     query: str
     relevant: str
@@ -37,15 +38,11 @@ class GraphState(TypedDict):
     answer: str
 
 
-def router(state):
+def router(state, ollamaobject: OllamaSetup):
 
-    print("### Router ###\n")
-
-    ollama = OllamaSetup(OLLAMA_NGROK_URL, model, temperature, top_p, top_k)
-    ollama.create_llm_instance()
     router_system_prompt = [
         SystemMessage(
-            content=f"""You are an expert at routing a user question to a vectorstore or web search.
+            content=f"""You are an expert at routing a user question to either using vectorstore to answer it or declaring it as irrelavant.
 
         The vectorstore contains {state["document_description"]}.
 
@@ -54,7 +51,7 @@ def router(state):
         Return JSON with single key, datasource, that is 'None' or 'vectorstore' depending on the question."""
         )
     ]
-    route_question = ollama.invoke_llm_json(
+    route_question = ollamaobject.invoke_llm_json(
         router_system_prompt + [HumanMessage(content=state["query"])]
     )
     source = json.loads(route_question)["datasource"]
@@ -67,55 +64,21 @@ def router(state):
         return "vectorstore"
 
 
-def retriver(state):
+def retriver(state, database):
     r"""
     This node is executed only if the output of the router was : "vectorstore"
     """
     print("### Retriver ###\n")
-    chroma = ch.ChromaDB(
-        embedding_model,
-        "../data/chromadb",
-        [
-            "../data/Applying_semi_empirical_simulation_of_wildfire_on_real_worldsatellite_imagery_data.pdf",
-            "../data/NIPS-2017-attention-is-all-you-need-Paper.pdf",
-        ],
-    )
-    Database = chroma.loadDB()
-    documents = Database.similarity_search(query=state["query"], k=4)
-    # return {"documents": documents}
+    documents = database.similarity_search(query=state["query"], k=k)
     state["documents"] = documents
     return state
 
 
-def generator(state):
+def generator(state, ollamaobject: OllamaSetup):
+    conversation_history = "\n".join(
+        [f"User: {q}\nAssistant: {a}" for q, a in state["conversation_history"]]
+    )
 
-    print("### Generate ###\n")
-    ollama = OllamaSetup(OLLAMA_NGROK_URL, model, temperature, top_p, top_k)
-    ollama.create_llm_instance()
-
-    # rag_system_prompt = [
-    #     HumanMessage(
-    #         content=f"""{whoami}
-
-    # Here is the needed documentation to use to answer the question:
-
-    # {state["documents"]}
-
-    # Think carefully about the above context.
-
-    # Now, review the user question:
-
-    # {state["query"]}
-
-    # Provide a detailed answer to this question, considering all relevant documentation.
-
-    # Aim for clarity and completeness in your explanation.
-
-    # If the question need to more explaination ask for it.
-
-    # Answer:"""
-    #     )
-    # ]
     rag_system_prompt = [
         HumanMessage(
             content=f"""{whoami}
@@ -124,76 +87,75 @@ def generator(state):
 
     {state["documents"]}
 
-    Think carefully about the above context.
+    Think carefully about the above context and the conversation so far:
 
-    Now, review the user question:
+    {conversation_history}
+
+    Now, review the new user question:
 
     {state["query"]}
 
     Provide a **concise** and **to-the-point** answer to this question. Aim for brevity, but include the most relevant details.
-
-    If the user asks for more details, provide them, but otherwise, keep the answer short and straightforward.
     
+    Always end the answer with a question to provide more details if needed or offering more help. 
+
     Answer:"""
         )
     ]
-    state["answer"] = ollama.invoke_llm(rag_system_prompt)
+    state["answer"] = ollamaobject.invoke_llm(rag_system_prompt)
+    state["conversation_history"].append((state["query"], state["answer"]))
     return state
 
 
-def apology(state):
+def apology(state, ollamaobject):
 
-    ollama_setup = OllamaSetup(OLLAMA_NGROK_URL, model, temperature, top_p, top_k)
-    ollama_setup.setup_env()
-    ollama_setup.create_llm_instance()
+    conversation_history = "\n".join(
+        [f"User: {q}\nAssistant: {a}" for q, a in state["conversation_history"]]
+    )
+
     apology_system_prompt = [
         SystemMessage(
-            content=f"""you will be handling the cases where the user asks an irrelavant question.
+            content=f"""You will be handling cases where the user asks an irrelevant question to your specific domain.
 
-    you are an expert of answering question only about {state["document_description"]}.
+    You are an expert at answering questions only about {state["document_description"]}.
 
-    Do not give any answer to the irrelavent question, just apologies and suggest to the user to ask you things relevant to your job."""
+    Previous conversation:
+
+    {conversation_history}
+
+    The user question is:
+
+    {state["query"]}
+
+    Apologize politely and suggest they ask questions relevant to your domain."""
         )
     ]
-    apology = ollama_setup.invoke_llm(system_prompt=apology_system_prompt)
+
+    apology = ollamaobject.invoke_llm(system_prompt=apology_system_prompt)
     state["answer"] = apology
+    state["conversation_history"].append((state["query"], state["answer"]))
     return state
 
 
-workflow = StateGraph(GraphState)
+def makegraph(ollamaobject: OllamaSetup, database):
+    workflow = StateGraph(GraphState)
 
-workflow.add_node("retriver", retriver)
-workflow.add_node("apology", apology)
-workflow.add_node("generator", generator)
+    workflow.add_node("retriver", lambda state: retriver(state, database))
+    workflow.add_node("apology", lambda state: apology(state, ollamaobject))
+    workflow.add_node("generator", lambda state: generator(state, ollamaobject))
 
-workflow.set_conditional_entry_point(
-    router,
-    {
-        "None": "apology",
-        "vectorstore": "retriver",
-    },
-)
+    workflow.set_conditional_entry_point(
+        lambda state: router(state, ollamaobject),
+        {
+            "None": "apology",
+            "vectorstore": "retriver",
+        },
+    )
 
-workflow.add_edge("retriver", "generator")
+    workflow.add_edge("retriver", "generator")
 
-graph = workflow.compile()
-# display(Image(graph.get_graph().draw_mermaid_png()))
-# image_data = graph.get_graph().draw_mermaid_png()
-
-# with open("graph_image.png", "wb") as f:
-# f.write(image_data)
-
-# state = {}
-
-# inputs = {
-#     "query": "How to configure a web server?",
-#     "document_description": """The official documentation of ubuntu server, it contains all the technical knowledge you have to know,
-#     all the configuration and anything related to ubuntu.""",
-# }
-# for event in graph.stream(inputs, stream_mode="values"):
-#     state.update(event)
-
-# print(state["answer"])
+    graph = workflow.compile()
+    return graph
 
 
 def chat_with_chatbot():
@@ -201,33 +163,46 @@ def chat_with_chatbot():
     This function allows an interactive chat between you and the chatbot.
     The chat ends when you type 'exit'.
     """
-    state = {
-        "document_description": """The official documentation of ubuntu server, it contains all the technical knowledge you have to know,
-        all the configuration and anything related to ubuntu."""
-    }
+    state = {"document_description": documen_description}
+
+    print("Building the model...")
+
+    # Initialize ollamaobject here
+    ollamaobject = OllamaSetup(OLLAMA_NGROK_URL, model, temperature, top_p, top_k)
+    ollamaobject.create_llm_instance()
+    chroma = ch.ChromaDB(
+        embedding_model,
+        "../data/chromadb",
+        [
+            # "../data/Applying_semi_empirical_simulation_of_wildfire_on_real_worldsatellite_imagery_data.pdf",
+            "../data/NIPS-2017-attention-is-all-you-need-Paper.pdf",
+        ],
+    )
+    database = chroma.loadDB()
+    # Pass the ollamaobject to the graph
+    graph = makegraph(ollamaobject, database)
+
+    print("Model built")
 
     while True:
-        # Get input from the user
         user_query = input("You: ")
 
-        # Exit the chat if the user types 'exit'
         if user_query.lower() == "exit":
             print("Chat ended.")
             break
 
-        # Update the query in the state
         inputs = {
             "query": user_query,
             "document_description": state["document_description"],
+            "conversation_history": []
         }
 
-        # Process the query through the workflow
+        state["answer"] = ""
+
+        print("Chatbot:", end=" ", flush=True)
         for event in graph.stream(inputs, stream_mode="values"):
-            state.update(event)
+            if "answer" in event:
+                state.update(event)
+                print(event["answer"], end="", flush=True)
 
-        # Display the chatbot's answer
-        print(f"Chatbot: {state['answer']}")
-
-
-# Start the chat
-chat_with_chatbot()
+        print()

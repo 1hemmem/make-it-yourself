@@ -1,7 +1,0 @@
-{
-    "OLLAMA_NGROK_URL": "https://600b-34-125-230-29.ngrok-free.app",
-    "model": "llama3.2:3b",
-    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-    "temperature": 0,
-    "whoami": "you are a cutomer support chatbot, the users expect you to be an expert of ubuntu and will ask you question about it"
-}

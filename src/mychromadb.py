@@ -48,7 +48,7 @@ if __name__ == "__main__":
     chroma = ChromaDB(
         "sentence-transformers/all-MiniLM-L6-v2",
         "../data/chromadb",
-        ["../data/ubuntu-server-guide-2024-01-22.pdf","../data/NIPS-2017-attention-is-all-you-need-Paper.pdf"],
+        ["../data/ubuntu-server-guide-2024-01-22.pdf"],
     )
 
     chroma.saveDB(1000, 100)
