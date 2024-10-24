@@ -81,6 +81,7 @@ export const Build = () => {
 
     try {
       const response = await fetch("http://localhost:8000/submit/", {
+        mode: "no-cors",
         method: "POST",
         body: formData, // No content-type here; browser handles it automatically
       });

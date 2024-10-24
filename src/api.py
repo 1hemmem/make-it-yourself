@@ -11,23 +11,23 @@ import mychromadb as ch
 from langgraph import graph
 
 app = FastAPI()
-OLLAMA_NGROK_URL = "https://c3fa-34-148-212-117.ngrok-free.app"
+OLLAMA_NGROK_URL = "https://1dcd-35-240-153-117.ngrok-free.app"
 
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# CORS middleware to allow requests from React frontend
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React frontend origin
+    allow_origins=["http://localhost:5173"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-modelconfig = None
+global_dict = {}
 
 class QueryRequest(BaseModel):
     query: str
@@ -96,6 +96,8 @@ async def submit_data(
         chroma = ch.ChromaDB(selectedEmbedding, "../data/chromadb", uploaded_file_paths)
         database = chroma.loadDB()
         graph = makegraph(ollamaobject, database)
+        global_dict["graph"] = graph
+        global_dict["document_description"] = description
         modelconfig = {
             "message": "Data received successfully",
             "description": description,
@@ -105,7 +107,6 @@ async def submit_data(
             "top_p": top_p,
             "top_k": top_k,
             "uploaded_files": uploaded_file_paths,
-            "graph": graph,
         }
         return modelconfig
     except Exception as e:
@@ -118,8 +119,8 @@ async def chat(query_request: QueryRequest) -> Dict[str, str]:
     user_query = query_request.query
     if not user_query:
         return {"error": "No query provided"}
-    graph = modelconfig["graph"]
-    document_description = modelconfig["document_description"]
+    graph = global_dict["graph"]
+    document_description = global_dict["document_description"]
     response = chat_with_chatbot(user_query,document_description,graph  )
     return {"response": response}
 
