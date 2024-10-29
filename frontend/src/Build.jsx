@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./Build.css";
+import "./Styles/Build.css";
 
 export const Build = () => {
   const [pdfFiles, setPdfFiles] = useState([]);
@@ -100,12 +100,15 @@ export const Build = () => {
   };
 
   return (
-    <div>
-      <h1>Upload PDFs and Provide Document Info</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="build-container">
+      <br /><br /><br />
+      <h1 className="build-title">Upload PDFs and Provide Document Info</h1>
+      <form onSubmit={handleSubmit} className="build-form">
         {/* PDF Upload Section */}
         <div className="form-section">
-          <label htmlFor="pdf-upload">Upload PDFs:</label>
+          <label htmlFor="pdf-upload" className="form-label">
+            Upload PDFs:
+          </label>
           <br />
           <input
             type="file"
@@ -115,17 +118,22 @@ export const Build = () => {
             onChange={handlePdfUpload}
             required
             disabled={loading} // Disable during loading
+            className="form-input"
           />
-          <ul>
+          <ul className="file-list">
             {pdfFiles.map((file, index) => (
-              <li key={index}>{file.name}</li>
+              <li key={index} className="file-item">
+                {file.name}
+              </li>
             ))}
           </ul>
         </div>
 
         {/* Document Description Section */}
         <div className="form-section">
-          <label htmlFor="description">Document Description:</label>
+          <label htmlFor="description" className="form-label">
+            Document Description:
+          </label>
           <br />
           <textarea
             id="description"
@@ -134,12 +142,15 @@ export const Build = () => {
             placeholder="Enter document description, based on this description the model will detect if the user question is relevant or not and make a decision to either answer or apologize"
             required
             disabled={loading} // Disable during loading
+            className="form-textarea"
           />
         </div>
 
         {/* Base Model Selection Section */}
         <div className="form-section">
-          <label htmlFor="base-dropdown">Select a base model:</label>
+          <label htmlFor="base-dropdown" className="form-label">
+            Select a base model:
+          </label>
           <br />
           <select
             id="base-dropdown"
@@ -147,6 +158,7 @@ export const Build = () => {
             onChange={handleBaseChange}
             required
             disabled={loading} // Disable during loading
+            className="form-select"
           >
             <option value="" disabled>
               Choose a base model
@@ -161,7 +173,9 @@ export const Build = () => {
 
         {/* Embedding Model Selection Section */}
         <div className="form-section">
-          <label htmlFor="embedding-dropdown">Select an embedding model:</label>
+          <label htmlFor="embedding-dropdown" className="form-label">
+            Select an embedding model:
+          </label>
           <br />
           <select
             id="embedding-dropdown"
@@ -169,6 +183,7 @@ export const Build = () => {
             onChange={handleEmbeddingChange}
             required
             disabled={loading} // Disable during loading
+            className="form-select"
           >
             <option value="" disabled>
               Choose an embedding model
@@ -183,7 +198,9 @@ export const Build = () => {
 
         {/* Temperature Slider */}
         <div className="form-section">
-          <label htmlFor="temperature-slider">Temperature: {temperature}</label>
+          <label htmlFor="temperature-slider" className="form-label">
+            Temperature: {temperature}
+          </label>
           <br />
           <input
             type="range"
@@ -194,12 +211,15 @@ export const Build = () => {
             value={temperature}
             onChange={handleTemperatureChange}
             disabled={loading} // Disable during loading
+            className="form-slider"
           />
         </div>
 
         {/* Top-p Slider */}
         <div className="form-section">
-          <label htmlFor="top-p-slider">Top-p: {topP}</label>
+          <label htmlFor="top-p-slider" className="form-label">
+            Top-p: {topP}
+          </label>
           <br />
           <input
             type="range"
@@ -210,12 +230,15 @@ export const Build = () => {
             value={topP}
             onChange={handleTopPChange}
             disabled={loading} // Disable during loading
+            className="form-slider"
           />
         </div>
 
         {/* Top-k Number Input */}
         <div className="form-section">
-          <label htmlFor="top-k-input">Top-k: {topK}</label>
+          <label htmlFor="top-k-input" className="form-label">
+            Top-k: {topK}
+          </label>
           <br />
           <input
             type="number"
@@ -223,15 +246,25 @@ export const Build = () => {
             value={topK}
             onChange={handleTopKChange}
             disabled={loading} // Disable during loading
+            className="form-input"
           />
         </div>
 
         {/* Loading Animation */}
-        {loading && <div className="loading-spinner">Loading...</div>}
+        {loading && (
+          <div className="loading-spinner">
+            <div className="lds-ring">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="form-section">
-          <button type="submit" disabled={loading}>
+          <button type="submit" disabled={loading} className="form-button">
             {loading ? "Building..." : "Build"}
           </button>
         </div>
