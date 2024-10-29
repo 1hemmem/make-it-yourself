@@ -11,7 +11,7 @@ import mychromadb as ch
 from langgraph import graph
 
 app = FastAPI()
-OLLAMA_NGROK_URL = "https://1dcd-35-240-153-117.ngrok-free.app"
+OLLAMA_NGROK_URL = "https://6e29-34-127-120-178.ngrok-free.app"
 
 
 # Set up logging

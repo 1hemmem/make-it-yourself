@@ -6,37 +6,6 @@ from langchain_core.messages import SystemMessage, HumanMessage
 import json
 from langgraph.graph import StateGraph
 
-# User input data
-# OLLAMA_NGROK_URL = "https://c3fa-34-148-212-117.ngrok-free.app"
-# model = "llama3.2:3b"
-# embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
-# k = 4
-# temperature = 0
-# whoami = "You are a knowledge managment assistant, users will ask you domain specific questions and you will answer them according to your experience"
-# document_description = """The document is the **Ubuntu Server Guide (2024 version)**, which serves as a comprehensive manual for installing, configuring, and managing an Ubuntu Server. It covers topics including:
-
-# - **Installation**: Step-by-step instructions for installing Ubuntu Server using various methods, such as bootable USB and network boot.
-# - **Configuration**: How to configure essential services like networking (NetPlan), storage, and security settings (firewall, user access, etc.).
-# - **Package Management**: Managing software with APT, third-party repositories, and upgrades.
-# - **Advanced Server Operations**: Guides for LDAP, Kerberos, virtualization, containers (LXC, Docker), VPNs, and high availability.
-# - **Web and Mail Services**: Setting up web servers (Apache, Nginx), databases (MySQL, PostgreSQL), and mail servers (Postfix, Dovecot).
-# - **Backup Solutions**: Methods for backups using tools like Bacula, rsnapshot, or shell scripts.
-
-# The guide includes tutorials, how-to guides, technical references, and resources for troubleshooting, ensuring that users can get the most out of their Ubuntu Server setup."""
-
-# top_p = 0.9
-
-# """Works together with top-k. A higher value (e.g., 0.95) will lead
-#     to more diverse text, while a lower value (e.g., 0.5) will
-#     generate more focused and conservative text. (Default: 0.9)"""
-
-# top_k = 40
-
-# """Reduces the probability of generating nonsense. A higher value (e.g. 100)
-#     will give more diverse answers, while a lower value (e.g. 10)
-#     will be more conservative. (Default: 40)"""
-
-
 class GraphState(TypedDict):
     conversation_history: List[str]
     document_description: str
@@ -102,8 +71,6 @@ def generator(state, ollamaobject: OllamaSetup):
     Now, review the new user question:
 
     {state["query"]}
-
-    Provide a **concise** and **to-the-point** answer to this question. Aim for brevity, but include the most relevant details.
     
     Always end the answer with a question to provide more details if needed or offering more help. 
 
