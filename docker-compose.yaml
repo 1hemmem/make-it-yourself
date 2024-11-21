@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./app
+    volumes:
+      - ./app:/app
+    ports:
+      - "8000:8000"  # Change this based on the ports your app uses
+    # environment:
+    #   - ENV_VAR=value  # Replace with actual environment variables if needed
+    # depends_on:
+    #   - db  # If your app depends on a database, for example
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/frontend
+    ports:
+      - "5173:5173"  # Replace with the actual port for your frontend
+    environment:
+      - ENV_VAR=value  # Add any frontend-specific environment variables
+
+volumes:
+  db_data:
+    driver: local
