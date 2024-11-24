@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import "./Styles/Test.css";
+import ReactMarkdown from 'react-markdown';
 
 export const Test = () => {
   const [query, setQuery] = useState('');
@@ -48,7 +49,7 @@ export const Test = () => {
       <div className="chat-window">
         {chatHistory.map((entry, index) => (
           <div key={index} className={entry.sender === 'You' ? 'user-message' : 'bot-message'}>
-            <strong>{entry.sender}:</strong> {entry.message}
+            <strong>{entry.sender}:</strong> <ReactMarkdown>{entry.message}</ReactMarkdown>
           </div>
         ))}
         {loading && <div className="loading-message">Chatbot is typing...</div>}

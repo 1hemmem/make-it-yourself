@@ -11,7 +11,7 @@ from langgraph import graph
 from graph import  makegraph
 
 app = FastAPI()
-OLLAMA_NGROK_URL = "https://dcf1-34-143-209-98.ngrok-free.app"
+OLLAMA_NGROK_URL = "https://f139-34-83-255-7.ngrok-free.app"
 
 
 # Set up logging
@@ -121,7 +121,10 @@ async def chat(query_request: QueryRequest) -> Dict[str, str]:
         return {"error": "No query provided"}
     graph = global_dict["graph"]
     document_description = global_dict["document_description"]
-    response = chat_with_chatbot(user_query,document_description,graph  )
+    response = chat_with_chatbot(user_query,document_description,graph)
+    
+    print(f"response:{response}")
+    
     return {"response": response}
 
 
