@@ -1,5 +1,9 @@
 # Make It Yourself
 
+```
+⚠️ This repository is still in construction ⚠️
+```
+
 ## About this project
 
 A Webapp that enables you to build your own domain expert chatbot, based on your provided documents (e.g: providing a guide of how to use a certain software)
