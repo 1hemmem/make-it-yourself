@@ -11,7 +11,7 @@ from langgraph import graph
 from graph import  makegraph
 
 app = FastAPI()
-OLLAMA_NGROK_URL = "https://f139-34-83-255-7.ngrok-free.app"
+OLLAMA_NGROK_URL = "https://d7eb-34-124-232-134.ngrok-free.app"
 
 
 # Set up logging

@@ -1,8 +1,5 @@
 # Make It Yourself
 
-```
-⚠️ This repository is still in construction ⚠️
-```
 
 ## About this project
 
@@ -21,13 +18,25 @@ Copy the ```ollama-server.ipynb``` code and put it in google colab, sign up in n
 And finally run the code in the T4 GPU.
 
 ### backend-server
-
-- path : ```/app/src```
-- install the required libraries: ```pip install -r requirements.txt```
-- run the api: ```python -m uvicorn api:app --host 0.0.0.0 --port 8000```
+- install ollama locally : [ollama](https://ollama.com/)
+- change the path : 
+```cd /app/src```
+- install the required libraries:
+```pip install -r requirements.txt```
+- run the api:
+```python -m uvicorn api:app --host 0.0.0.0 --port 8000```
 
 ### frontend
 
-- path: ```/frontend```
-- install required packages: ```npm install```
-- run : ```npm run dev```
+- change the path:
+```cd /frontend```
+- install required packages:
+```npm install```
+- run the react app :
+```npm run dev```
+
+
+## Futur work
+- Implemetation of multi-instance testing
+- Give more control over the workflow parameters: similarity search function, k: number of documents retrieved, document chuncking strategy
+- Improving the results with hellucination check.
