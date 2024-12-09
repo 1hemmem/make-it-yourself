@@ -58,7 +58,7 @@ export const Test = () => {
       <div className="input-container">
         <input
           type="text"
-          placeholder="Type your query..."
+          placeholder="Type your question..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={handleKeyPress}
